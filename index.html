@@ -10,8 +10,8 @@
                 .then(async function(value) {
                     if (value["error"]["code"] == 401) {
                         window.open("https://openrouter.ai/keys");
-                        key = await prompt("Enter an OpenRouter api key (openrouter.ai)")
-                        .then(async () => {
+                        key = await prompt("Enter an OpenRouter api key (openrouter.ai)");
+                        key.then(async () => {
                             await check(key);
                         })
                     } else {localStorage.setItem("api_key",key)}
