@@ -15,6 +15,7 @@
                     } else {localStorage.setItem("api_key",key)}
                 });
             }
+
             /* DECLARING FUNCTIONS */
             async function req(data) {
                 const response = await fetch(
@@ -38,7 +39,7 @@
                     }
                 );
                 const result = await response.json();
-                /*document.getElementById("text").innerHTML =*/return result.choices[0].message.content.replace("\n","")
+                return result.choices[0].message.content.replace("\n","")
             }
             function waitForKeypress(key) {
                 return new Promise((resolve) => {
@@ -84,21 +85,19 @@
                 pout.innerHTML = cont;
                 document.body.appendChild(pout);
             }
+
             /* MAIN LOOP */
             window.onload = async () => {
                 await check(localStorage.getItem("api_key"))
                 var game = "";
                 while (["start", "continue"].includes(game) == false) {
-                    console.log(game);
                     game = await input();
                     if (game == "continue") {
                         let res = localStorage.getItem("last")
-                        console.log(res)
                         if (res != null) {
                             print(res);
                             act = await input();
                         } else {game = "start";}
-                        console.log(game);
                     }
                     if (game == "start") {
                         var act = "Make an opening scene starting in a forest";
@@ -142,6 +141,7 @@
             }
         </style>
     </head>
+
     <body>
         <center>AI RPG</center>
         <p id="text">start, continue</p>
