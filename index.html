@@ -86,10 +86,10 @@
 
             /* MAIN LOOP */
             window.onload = async () => {
-                localStorage.setItem("api_key", prompt("Enter OpenRouter API key (openrouter.ai/keys)"));
+                localStorage.setItem("api_key", await prompt("Enter OpenRouter API key (openrouter.ai/keys)"));
                 while (await check(localStorage.getItem("api_key")) == false) {
                     window.open("https://www.openrouter.ai/keys")
-                    localStorage.setItem("api_key", prompt("Enter OpenRouter API key (openrouter.ai/keys)"));
+                    localStorage.setItem("api_key", await prompt("Enter OpenRouter API key (openrouter.ai/keys)"));
                 };
                 var game = "";
                 while (["start", "continue"].includes(game) == false) {
