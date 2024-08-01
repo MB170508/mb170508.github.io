@@ -5,12 +5,12 @@
         <script>
             /* GETTING & CHECKING API KEY */
             async function check(key) {
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {headers: { Authorization: 'Bearer '+key }, method: 'POST'});
-                const result = await response.json()
-                .then(async (value) => {
-                    if (value["error"]["code"] == 401) {return false} else {return true}
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', { 
+                    headers: { Authorization: 'Bearer ' + key }, 
+                    method: 'POST' 
                 });
-                return result
+                const result = await response.json();
+                return result.error?.code !== 401;
             }
 
             /* DECLARING FUNCTIONS */
@@ -18,14 +18,14 @@
                 const response = await fetch(
                     "https://openrouter.ai/api/v1/chat/completions",
                     {
-                        headers: { Authorization: "Bearer "+localStorage.getItem("api_key") },
+                        headers: { Authorization: "Bearer " + localStorage.getItem("api_key") },
                         method: "POST",
                         body: JSON.stringify({
                             "model": "openchat/openchat-7b:free",
                             "messages": [
                                 {
                                     "role": "system",
-                                    "content": "You're an rpg text based game, you do not make decisions for the user. Your responses will always only be descriptions of the users actions and also describing the surroundings. Always end with explicitly and nothing else than 'What will you do?'. Your responses will correspond to the dialogue between the game and the user given to you with the action the user chose. Make up random threats or issues sometimes while preforming the users chosen action. Do not let the user preform activities that are out of human abilities or if he lacks items otherwise let him do anything. Let the user have his own morals you do not influence him or his actions and you do not preform actions for the user. Do not use 'game: ' at the beginning or ';' at the end of your response from the history when responding to the user. DO NOT COMMENT THE USERS CHOICES OR MORALITIES",
+                                    "content": "You're an RPG text-based game..."
                                 },
                                 {
                                     "role": "user",
@@ -36,48 +36,53 @@
                     }
                 );
                 const result = await response.json();
-                return result.choices[0].message.content.replace("\n","")
+                return result.choices[0].message.content.replace("\n", "");
             }
+
             function waitForKeypress(key) {
                 return new Promise((resolve) => {
-                document.addEventListener('keydown', onKeyHandler);
-                function onKeyHandler(e) {
-                    if (e.key === key) {
-                    document.removeEventListener('keydown', onKeyHandler);
-                    resolve();
+                    document.addEventListener('keydown', onKeyHandler);
+                    function onKeyHandler(e) {
+                        if (e.key === key) {
+                            document.removeEventListener('keydown', onKeyHandler);
+                            resolve();
+                        }
                     }
-                }
                 });
             }
+
             async function input() {
                 const container = document.createElement("div");
                 container.id = "container";
                 document.body.appendChild(container);
                 const lbl = document.createElement("label");
-                lbl.for = "data";
+                lbl.htmlFor = "data";
                 lbl.innerHTML = ">";
                 const inp = document.createElement("input");
                 inp.type = "text";
                 inp.id = "data";
-                inp.autocomplete = "off"
+                inp.autocomplete = "off";
                 container.appendChild(lbl);
                 container.appendChild(inp);
                 await waitForKeypress("Enter");
                 const usr = document.createElement("p");
                 usr.style.margin = "0px";
-                usr.innerHTML = ">".concat(inp.value);
+                usr.innerHTML = ">" + inp.value;
                 document.body.appendChild(usr);
                 lbl.remove();
                 inp.remove();
-                container.removeAttribute("id");
-                return usr.innerHTML.replace("&gt;","");
+                container.remove();
+                return usr.innerHTML.replace(">", "").trim();
             }
+
             function saveToHistory(item) {
-                localStorage.setItem("history",item)
+                localStorage.setItem("history", item);
             }
+
             function addToHistory(item) {
-                localStorage.setItem("history", localStorage.getItem("history") + item + "\n")
+                localStorage.setItem("history", (localStorage.getItem("history") || "") + item + "\n");
             }
+
             function print(cont) {
                 const pout = document.createElement("p");
                 pout.innerHTML = cont;
@@ -86,38 +91,49 @@
 
             /* MAIN LOOP */
             window.onload = async () => {
-                localStorage.setItem("api_key", await prompt("Enter OpenRouter API key (openrouter.ai/keys)"));
-                while (await check(localStorage.getItem("api_key")) == false) {
-                    window.open("https://www.openrouter.ai/keys")
-                    localStorage.setItem("api_key", await prompt("Enter OpenRouter API key (openrouter.ai/keys)"));
-                };
-                var game = "";
-                while (["start", "continue"].includes(game) == false) {
+                let apiKey = localStorage.getItem("api_key");
+                
+                // Corrected the check for null and invalid API key
+                if (!apiKey || !(await check(apiKey))) {
+                    // Moved prompt into a do...while loop
+                    do {
+                        window.open("https://www.openrouter.ai/keys");
+                        apiKey = await prompt("Enter OpenRouter API key (openrouter.ai/keys)");
+                        localStorage.setItem("api_key", apiKey);
+                    } while (!(await check(apiKey)));
+                }
+
+                let game = "";
+                print("start, continue");
+                while (!["start", "continue"].includes(game)) {
                     game = await input();
-                    if (game == "continue") {
-                        let res = localStorage.getItem("last")
+                    if (game === "continue") {
+                        let res = localStorage.getItem("last");
                         if (res != null) {
                             print(res);
                             act = await input();
-                        } else {game = "start";}
-                    };
-                    if (game == "start") {
+                        } else {
+                            game = "start";
+                        }
+                    }
+                    if (game === "start") {
                         var act = "Make an opening scene starting in a forest";
-                        localStorage.setItem("history","");
-                    };
-                };
-                while (act != 0) {
+                        localStorage.setItem("history", "");
+                    }
+                }
+
+                while (act !== 0) {
                     const rsp = document.createElement("p");
                     rsp.innerHTML = "loading...";
                     document.body.appendChild(rsp);
-                    game = await req("dialogue history starting with the opening scene: '"+localStorage.getItem("history")+"' \nusers action: '"+act+"'");
-                    game = game.replace("\n\n","\n").replace("  "," ").replace("game: ","").trim();
-                    addToHistory("user: "+act);
-                    addToHistory("game: "+game.replace("\n"," ").replace("\r\n"," "));
-                    localStorage.setItem("last",game);
+                    game = await req("dialogue history starting with the opening scene: '" + localStorage.getItem("history") + "' \nusers action: '" + act + "'");
+                    game = game.replace("\n\n", "\n").replace("  ", " ").replace("game: ", "").trim();
+                    addToHistory("user: " + act);
+                    addToHistory("game: " + game.replace("\n", " ").replace("\r\n", " "));
+                    localStorage.setItem("last", game);
                     rsp.innerHTML = game;
                     act = await input();
-                };
+                }
             }
         </script>
         <style>
@@ -145,6 +161,5 @@
     </head>
     <body>
         <center>AI RPG</center>
-        <p id="text">start, continue</p>
     </body>
 </html>
