@@ -97,7 +97,7 @@
                 if (!apiKey || !(await check(apiKey))) {
                     // Moved prompt into a do...while loop
                     do {
-                        window.open("https://www.openrouter.ai/keys");
+                        // window.open("https://www.openrouter.ai/keys");
                         apiKey = await prompt("Enter OpenRouter API key (openrouter.ai/keys)");
                         localStorage.setItem("api_key", apiKey);
                     } while (!(await check(apiKey)));
